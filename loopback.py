@@ -19,6 +19,10 @@ import Queue
 '''Keyboard interrupt
 '''
 def signal_handler(sig, frame):
+    pdo1_thrd.do_run = False
+    pdo2_thrd.do_run = False
+    pdo3_thrd.do_run = False
+    heart_thrd.do_run = False
     #close the HW before exiting
     libCAN.CloseCANMate(handle)
     print('You pressed Ctrl+C!')
@@ -76,9 +80,12 @@ class CANEvent(Structure):
                 ('chRxErrCnt', ctypes.c_ubyte)]
 
 def toCanTx(message, delay, queue_in):
-    while True:
+    t = threading.currentThread()
+    while getattr(t, "do_run", True):
         queue_in.put(message)
         time.sleep(delay)
+    
+    print("stopping thread {}".format(t.name))
 
 class ProcessThread(threading.Thread):
     def __init__(self, in_q):
@@ -146,6 +153,9 @@ if __name__ == "__main__":
     
     #open the device
     handle = libCAN.OpenCANMate(_data_fn, _event_fn)
+    if handle <= 0:
+        print "Failed to open"
+        exit(-1)
     #set the baudrate
     ret_check = libCAN.SetCANBaudRate(handle, chBaudRate)
     #set to start reception
@@ -159,7 +169,21 @@ if __name__ == "__main__":
     t.setDaemon(True)
     t.start()
     #start a thread and send data every one second
-    threading.Thread(target=toCanTx, args=(pdo1, 5, writequeue)).start()
-    threading.Thread(target=toCanTx, args=(pdo2, 5, writequeue)).start()
-    threading.Thread(target=toCanTx, args=(pdo3, 5, writequeue)).start()
-    threading.Thread(target=toCanTx, args=(heartBeat, 1, writequeue)).start()
+    pdo1_thrd = threading.Thread(name="pdo1", target=toCanTx, args=(pdo1, 5, writequeue))
+    pdo2_thrd = threading.Thread(name="pdo2", target=toCanTx, args=(pdo2, 5, writequeue))
+    pdo3_thrd = threading.Thread(name="pdo3", target=toCanTx, args=(pdo3, 5, writequeue))
+    heart_thrd = threading.Thread(name="heartbeat", target=toCanTx, args=(heartBeat, 1, writequeue))
+
+    pdo1_thrd.setDaemon = True
+    pdo2_thrd.setDaemon = True
+    pdo3_thrd.setDaemon = True
+    heart_thrd.setDaemon = True
+
+    pdo1_thrd.start()
+    pdo2_thrd.start()
+    pdo3_thrd.start()
+    heart_thrd.start()
+
+    while True:
+        time.sleep(1)
+
