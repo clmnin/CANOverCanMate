@@ -1,5 +1,6 @@
 '''
-Loop a certain CAN frame
+Send CAN frames (PDO and heartbeat style) in loopback mode.
+To be used for testing and basic learing
 
 @author Clament John
 @data 19th November 2018

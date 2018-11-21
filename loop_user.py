@@ -1,5 +1,5 @@
 '''
-Loop a certain CAN frame
+Receive, Transmit or Loopback. Give the user the power
 
 @author Clament John
 @data 09th November 2018

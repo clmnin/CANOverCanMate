@@ -1,5 +1,6 @@
 '''
-Loop a certain CAN frame
+Send CANFrames (PDOs and heartbeat in accordance with CANOpen) over
+the CANMate CAN emulator.
 
 @author Clament John
 @data 19th November 2018
